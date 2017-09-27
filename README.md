@@ -30,6 +30,11 @@ git-mirror \
 
 All repositories from `server1` key, will be mirrored to repositories of `server2`.
 
+If `cacheDir` is not provided, repositories will be cloned to a temporary location and 
+will be removed up after mirroring.
+
+`concurrency` flag allows to tune number of parallel workers.
+
 ## License
 
 Software licensed under the [MIT License](http://www.opensource.org/licenses/MIT).
