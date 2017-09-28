@@ -14,7 +14,17 @@ test:
 format:
 	gofmt -d -w -s -e .
 
-build-linux:
-	GOOS=linux GOARCH=amd64 go build -o git-mirror git-mirror.go config.go
+build:
+	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o git-mirror.exe .
+	tar -czf ./git-mirror_windows_amd64.tar.gz ./git-mirror.exe ./README.md
+	rm -f ./git-mirror.exe
 
-.PHONY: test build-linux format
+	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o git-mirror .
+	tar -czf ./git-mirror_linux_amd64.tar.gz ./git-mirror ./README.md
+	rm -f ./git-mirror
+
+	GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o git-mirror .
+	tar -czf ./git-mirror_darwin_amd64.tar.gz ./git-mirror ./README.md
+	rm -f ./git-mirror
+
+.PHONY: install test build format

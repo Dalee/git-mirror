@@ -1,16 +1,20 @@
 language: go
 
 go:
-- 1.9.x
+  - 1.9.x
 
 script:
-- make test
-- make build-linux
+  - make test
+  - make build
 
 deploy:
+  skip_cleanup: true
+  on:
+    tags: true
   provider: releases
   api_key:
     secure: VxkeUcr43nPffqJwV3pwUEVPRXlR5hTtkOs+JZbTMfV+P04/JnGmJaeJE6iT9VeJpqtbpOqjTRWuoenpxLTrUeuTTTjY+ANEBW5KC4QM0F654l/izGjD3EIBYqDm+VnV9EwDLQNld43rwiK+DMJ3hBfUxZrEzFk8RyMQj2YRcocXEpCEW0Ixmcu9feQOwow9+oQZD5pdjdk22cQxh2Hw7I8MgKWEQRTmCK+S4NcoI21NfMaR2ph3CO6kSHaGVfzEsmmeZpb7z42va35RNnG3ROVhkOJ4gz09sjNuISNeGUlyAPu14J1eaLmPLF3EMUM2aPBRSvPvQ2x6oSKUxPnzB0Sdwa1h2jdk6tNjweKMF8/6chCaqpv94FFIhIssX82V+1hDqJsR9Ff8Y6vHQ5AS0ZaS1f3wZMmp9jsC7IS4/1NHy65/Dl++yx5nBCz6DTCWf6lF+i3D/wXFLgsie1c5G0NKtqUMOUbOUVTzQOM5eSps10fUxuHN/L1PK+FkUsUGPBPptQHIXu746/DmhPdm70nyw1n1jiF00PcvXuCzuQbluy2sDcfIyDF3v8DOBXlskNEURFgZt7pPl0nhJgfolsjI99JNGbp8y0Y4BzJe+9iJ/AUbX3IRq2led+YnAeVFfEuvvTpoL45fMHuK6f9J2AvrNtooUawemfCOPz4qWts=
-  file: git-mirror
-  on:
-    repo: arkady-emelyanov/git-mirror
+  file:
+    - git-mirror_linux_amd64.tar.gz
+    - git-mirror_windows_amd64.tar.gz
+    - git-mirror_darwin_amd64.tar.gz
