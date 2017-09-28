@@ -1,7 +1,6 @@
 install:
 	go get -u github.com/modocache/gover
 	go get -u github.com/golang/lint/golint
-	go get -u github.com/Masterminds/glide
 	go get -u github.com/gordonklaus/ineffassign
 	go get -u github.com/client9/misspell/cmd/misspell
 
