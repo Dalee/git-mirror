@@ -83,15 +83,22 @@ func parseCommandLine() (mirror, error) {
 	var helpRequested bool
 
 	cfg := mirror{}
+	flag.Usage = func() {
+		fmt.Printf("Usage: %s ", os.Args[0])
+		fmt.Printf("[OPTIONS] repository_list.json srcKey dstKey\n\n")
+		fmt.Printf("Options:\n")
+		flag.PrintDefaults()
+	}
 	flag.StringVar(&cfg.cacheDir, "cacheDir", "", "Cache directory")
 	flag.BoolVar(&cfg.cleanupCacheDir, "cleanCache", false, "Cache cleanup (automatic when cache directory is not provided)")
 	flag.IntVar(&cfg.concurrentJobs, "concurrency", 5, "Number of workers")
 	flag.BoolVar(&helpRequested, "help", false, "This help")
 	flag.Parse()
 
-	// if help requested or argument mismatch count, just return error and empty cfg
+	// if help requested or argument mismatch count, just exit with usage
 	if helpRequested || flag.NArg() != 3 {
-		return cfg, errors.New("invalid arguments")
+		flag.Usage()
+		os.Exit(0)
 	}
 
 	if cfg.cacheDir == "" {
@@ -104,13 +111,6 @@ func parseCommandLine() (mirror, error) {
 	cfg.dstKey = flag.Arg(2)
 
 	return cfg, nil
-}
-
-// display help
-func (c *mirror) displayUsage() {
-	fmt.Println("Usage: git-mirror [OPTIONS] repository_list.json srcKey dstKey")
-	flag.PrintDefaults()
-	os.Exit(0)
 }
 
 // load and validate json
@@ -192,7 +192,7 @@ func (c *mirror) process() (chan bool, chan string, chan error) {
 				chErr <- err
 			}
 
-			elapsed := time.Now().Sub(started).Round(time.Second)
+			elapsed := time.Since(started).Round(time.Second)
 			chOut <- fmt.Sprintf("+ %s in %s", item.src, elapsed)
 
 		}(item)
@@ -202,7 +202,7 @@ func (c *mirror) process() (chan bool, chan string, chan error) {
 	go func() {
 		wg.Wait()
 
-		chOut <- fmt.Sprintf("> Finished in %s", time.Now().Sub(startedAt).Round(time.Second))
+		chOut <- fmt.Sprintf("> Finished in %s", time.Since(startedAt).Round(time.Second))
 		chDone <- true
 
 		close(chOut)

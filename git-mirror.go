@@ -9,7 +9,7 @@ import (
 func main() {
 	m, err := parseCommandLine()
 	if err != nil {
-		m.displayUsage()
+		panic(err)
 	}
 
 	// load, parse and validate repository list
@@ -27,8 +27,10 @@ func main() {
 	}
 
 	// perform sync
-	ok := true
 	chDone, chOut, chErr := m.process()
+	exitCode := 0
+
+done:
 	for {
 		select {
 		case line := <-chOut:
@@ -36,14 +38,12 @@ func main() {
 
 		case err := <-chErr:
 			fmt.Println(err.Error())
-			ok = false
+			exitCode = 1
 
 		case <-chDone:
-			if ok {
-				os.Exit(0)
-			} else {
-				os.Exit(1)
-			}
+			break done
 		}
 	}
+
+	os.Exit(exitCode)
 }
