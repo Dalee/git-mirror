@@ -23,6 +23,7 @@ type (
 		jsonListFile    string
 		srcKey          string
 		dstKey          string
+		refs            refs
 
 		repoList []repo
 	}
@@ -32,7 +33,18 @@ type (
 		src string
 		dst string
 	}
+
+	refs []string
 )
+
+func (r *refs) String() string {
+	return "refs"
+}
+
+func (r *refs) Set(value string) error {
+	*r = append(*r, value)
+	return nil
+}
 
 // git exec helper
 func runGitCommand(dir string, args ...string) error {
@@ -47,15 +59,26 @@ func runGitCommand(dir string, args ...string) error {
 }
 
 // perform repository mirroring
-func (r *repo) sync(cacheDir string, cleanupOnSuccess bool) error {
+func (r *repo) sync(cacheDir string, cleanupOnSuccess bool, refs *refs) error {
 	var scenario [][]string
 
 	// check if repository exists
 	_, s := os.Stat(path.Join(r.dir, "HEAD"))
 	if os.IsNotExist(s) {
-		scenario = append(scenario, []string{cacheDir, "clone", "--mirror", r.src, r.dir})
+		if err := runGitCommand(cacheDir, "clone", "--mirror", r.src, r.dir); err != nil {
+			return err
+		}
 	} else {
 		scenario = append(scenario, []string{r.dir, "fetch", "-p", "origin"})
+	}
+
+	if len(*refs) > 0 {
+		runGitCommand(r.dir, "config", "--unset-all", "remote.origin.push")
+
+		for _, ref := range *refs {
+			refSpec := fmt.Sprintf("+refs/%s/*:refs/%s/*", ref, ref)
+			scenario = append(scenario, []string{r.dir, "config", "--add", "remote.origin.push", refSpec})
+		}
 	}
 
 	// add rest of commands..
@@ -93,6 +116,7 @@ func parseCommandLine() (mirror, error) {
 	flag.BoolVar(&cfg.cleanupCacheDir, "cleanCache", false, "Cache cleanup (automatic when cache directory is not provided)")
 	flag.IntVar(&cfg.concurrentJobs, "concurrency", 5, "Number of workers")
 	flag.BoolVar(&helpRequested, "help", false, "This help")
+	flag.Var(&cfg.refs, "ref", "Refs to mirror (default all)")
 	flag.Parse()
 
 	// if help requested or argument mismatch count, just exit with usage
@@ -188,7 +212,7 @@ func (c *mirror) process() (chan bool, chan string, chan error) {
 
 			chGuard <- true
 			started := time.Now()
-			if err := item.sync(c.cacheDir, c.cleanupCacheDir); err != nil {
+			if err := item.sync(c.cacheDir, c.cleanupCacheDir, &c.refs); err != nil {
 				chErr <- err
 			}
 
